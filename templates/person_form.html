@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Add {{ kind }}</h1>
+<form method="post" class="card form">
+  <label>Name <input name="name" required></label>
+  <label>Email (login) <input name="email" type="email" required></label>
+  <label>Mobile <input name="mobile"></label>
+  <label>Temporary password <input name="password" type="password" required minlength="6"></label>
+  {% if kind == 'driver' %}
+  <label>Licence number <input name="license_no"></label>
+  <label>Licence expiry <input name="license_expiry" type="date"></label>
+  {% else %}
+  <label>Company <input name="company"></label>
+  <label>Address <input name="address"></label>
+  {% endif %}
+  <button class="btn">Create {{ kind }}</button>
+</form>
+{% endblock %}

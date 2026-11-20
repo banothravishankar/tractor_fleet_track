@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Assign order #{{ o.id }}</h1>
+<div class="card">
+  <p><b>{{ o.customer_name }}</b>: {{ o.material }}, {{ o.quantity }} {{ o.unit }}<br>
+    {{ o.pickup_location }} → {{ o.drop_location }}</p>
+</div>
+<form method="post" class="card form">
+  <label>Tractor (Available only)
+    <select name="tractor_id" required>{% for t in tractors %}<option value="{{ t.id }}">{{ t.reg_no }} · {{ t.make }} ·
+        {{ t.capacity_tons }} t</option>{% endfor %}</select></label>
+  <label>Driver (Available only)
+    <select name="driver_id" required>{% for d in drivers %}<option value="{{ d.id }}">{{ d.name }} · {{ d.license_no }}
+      </option>{% endfor %}</select></label>
+  {% if not tractors or not drivers %}<p class="bad">No available {{ 'tractor' if not tractors else 'driver' }}. Approve
+    a tractor or free one by closing a trip.</p>
+  {% else %}<button class="btn">Create trip</button>{% endif %}
+</form>
+{% endblock %}

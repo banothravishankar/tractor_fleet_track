@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-box">
+  <h1>🚛 FleetTrack</h1>
+  <p class="muted">Tractor onboarding, loading, delivery and unloading</p>
+  <form method="post">
+    <label>Email <input type="email" name="email" required autofocus></label>
+    <label>Password <input type="password" name="password" required></label>
+    <button class="btn" type="submit">Log in</button>
+  </form>
+  <details>
+    <summary>Demo accounts</summary>
+    <table class="small">
+      <tr>
+        <td>Admin</td>
+        <td>admin@fleet.com</td>
+        <td>admin123</td>
+      </tr>
+      <tr>
+        <td>Dispatcher</td>
+        <td>dispatcher@fleet.com</td>
+        <td>dispatch123</td>
+      </tr>
+      <tr>
+        <td>Driver</td>
+        <td>driver1@fleet.com</td>
+        <td>driver123</td>
+      </tr>
+      <tr>
+        <td>Customer</td>
+        <td>customer@fleet.com</td>
+        <td>customer123</td>
+      </tr>
+    </table>
+  </details>
+</div>
+{% endblock %}

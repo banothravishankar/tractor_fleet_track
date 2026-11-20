@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="head">
+    <h1>Tractors</h1>
+    {% if g.user.role == 'admin' %}<a class="btn" href="{{ url_for('tractor_new') }}">+ Onboard tractor</a>{% endif %}
+</div>
+<div class="card">
+    <table>
+        <tr>
+            <th>Reg. no</th>
+            <th>Make / model</th>
+            <th>Capacity</th>
+            <th>GPS device</th>
+            <th>Status</th>
+        </tr>
+        {% for t in rows %}<tr>
+            <td><a href="{{ url_for('tractor_detail', tid=t.id) }}">{{ t.reg_no }}</a></td>
+            <td>{{ t.make }} {{ t.model }}</td>
+            <td>{{ t.capacity_tons }} t</td>
+            <td>{{ t.gps_device_id }}</td>
+            <td><span class="badge t-{{ t.status|replace(' ','') }}">{{ t.status }}</span></td>
+        </tr>{% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="head">
+    <h1>Orders</h1><a class="btn" href="{{ url_for('order_new') }}">+ New order</a>
+</div>
+<div class="card">
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Route</th>
+            <th>Material</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+        {% for o in rows %}<tr>
+            <td>{{ o.id }}</td>
+            <td>{{ o.customer_name }}</td>
+            <td>{{ o.pickup_location }} → {{ o.drop_location }}</td>
+            <td>{{ o.material }} · {{ o.quantity }} {{ o.unit }}</td>
+            <td><span class="badge s-{{ o.status|replace(' ','') }}">{{ o.status }}</span></td>
+            <td>{% if o.status == 'New' %}<a class="btn sm" href="{{ url_for('assign', oid=o.id) }}">Assign</a>{% endif
+                %}</td>
+        </tr>{% endfor %}
+    </table>
+</div>
+{% endblock %}

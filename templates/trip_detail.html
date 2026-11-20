@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Trip #{{ trip.id }} <span class="badge s-{{ trip.status|replace(' ','') }}">{{ trip.status }}</span></h1>
+</div>
+
+<div class="steps">
+  {% set idx = chain.index(trip.status) %}
+  {% for s in chain %}<div class="step {{ 'done' if loop.index0 < idx else ('now' if loop.index0 == idx else '') }}">{{
+    s }}</div>{% endfor %}
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Details</h2>
+    <dl>
+      <dt>Customer</dt>
+      <dd>{{ trip.customer_name }}</dd>
+      <dt>Route</dt>
+      <dd>{{ trip.pickup_location }} → {{ trip.drop_location }}</dd>
+      <dt>Material</dt>
+      <dd>{{ trip.material }}, {{ trip.quantity }} {{ trip.unit }}</dd>
+      <dt>Tractor</dt>
+      <dd>{{ trip.reg_no }} ({{ trip.make }} {{ trip.model }})</dd>
+      <dt>Driver</dt>
+      <dd>{{ trip.driver_name }}</dd>
+      {% if g.user.role in ('customer','admin') and trip.status not in ('Delivered','Closed') %}
+      <dt>Delivery OTP</dt>
+      <dd><span class="otp">{{ trip.delivery_otp }}</span><br><small class="muted">Give this code to the driver after
+          you check the unloaded goods.</small></dd>
+      {% endif %}
+    </dl>
+
+    {% if actions %}<h2>Actions</h2>
+    {% for key, a in actions.items() %}
+    <form method="post" action="{{ url_for('trip_action', trip_id=trip.id, name=key) }}" class="form actionform">
+      {% if a.form == 'loading' %}
+      <label>Loaded quantity ({{ trip.unit }}) <input name="loaded_qty" type="number" step="any"
+          value="{{ trip.quantity }}"></label>
+      <label>Weight (kg) <input name="weight_kg" type="number" step="any"></label>
+      <label>Seal number <input name="seal_no"></label>
+      <label>Notes <input name="notes"></label>
+      {% elif a.form == 'unloading' %}
+      <label>Delivery OTP from customer <input name="otp" required maxlength="4" inputmode="numeric"></label>
+      <label>Received quantity ({{ trip.unit }}) <input name="received_qty" type="number" step="any"
+          value="{{ trip.quantity }}"></label>
+      <label>Receiver name <input name="receiver_name" required></label>
+      <label>Notes <input name="notes"></label>
+      {% endif %}
+      <button class="btn">{{ a.label }}</button>
+    </form>
+    {% endfor %}{% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Status history</h2>
+    <table class="small">{% for l in log %}<tr>
+        <td>{{ l.changed_at }}</td>
+        <td><b>{{ l.status }}</b></td>
+        <td>{{ l.who or 'system' }}</td>
+        <td class="muted">{{ l.note }}</td>
+      </tr>{% endfor %}</table>
+    {% if loading %}<h2>Loading record</h2>
+    <dl>
+      <dt>Started / ended</dt>
+      <dd>{{ loading.started_at }} / {{ loading.ended_at or '-' }}</dd>
+      <dt>Quantity / weight</dt>
+      <dd>{{ loading.loaded_qty or '-' }} / {{ loading.weight_kg or '-' }} kg</dd>
+      <dt>Seal no.</dt>
+      <dd>{{ loading.seal_no or '-' }}</dd>
+    </dl>{% endif %}
+    {% if unloading %}<h2>Unloading record</h2>
+    <dl>
+      <dt>Started / ended</dt>
+      <dd>{{ unloading.started_at }} / {{ unloading.ended_at or '-' }}</dd>
+      <dt>Received</dt>
+      <dd>{{ unloading.received_qty or '-' }} by {{ unloading.receiver_name or '-' }}</dd>
+      <dt>OTP verified</dt>
+      <dd>{{ 'Yes' if unloading.otp_verified else 'No' }}</dd>
+    </dl>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Live tracking</h2>
+  {% if g.user.role == 'driver' and trip.status in ('In Transit','Arrived') %}
+  <p>
+    <button class="btn sm" id="share">Share my live location</button>
+    {% if trip.pickup_lat is not none and trip.drop_lat is not none %}<button class="btn sm alt" id="sim">Simulate drive
+      (demo)</button>{% endif %}
+    <span id="gpsmsg" class="muted"></span>
+  </p>
+  {% endif %}
+  <div id="map"></div>
+</div>
+
+<script>
+  const TRIP = {{ trip.id }};
+  const pickup = {{ [trip.pickup_lat, trip.pickup_lng]| tojson if trip.pickup_lat is not none else 'null' }};
+  const drop = {{ [trip.drop_lat, trip.drop_lng]| tojson if trip.drop_lat is not none else 'null' }};
+  const map = L.map('map').setView(pickup || drop || [16.71, 81.10], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  if (pickup) L.marker(pickup).addTo(map).bindPopup('Pickup');
+  if (drop) L.marker(drop).addTo(map).bindPopup('Customer site');
+  if (pickup && drop) map.fitBounds([pickup, drop], { padding: [30, 30] });
+  const line = L.polyline([], { color: '#1d4ed8' }).addTo(map);
+  let truck = null;
+  async function refresh() {
+    try {
+      const r = await fetch('/api/trips/' + TRIP + '/locations');
+      if (!r.ok) return;
+      const d = await r.json();
+      const pts = d.points.map(p => [p.lat, p.lng]);
+      line.setLatLngs(pts);
+      if (pts.length) {
+        const last = pts[pts.length - 1];
+        if (!truck) truck = L.circleMarker(last, { radius: 8, color: '#b91c1c', fillOpacity: 1 }).addTo(map).bindPopup('Tractor');
+        else truck.setLatLng(last);
+      }
+      window.__lastStatus = window.__lastStatus || d.status;
+      if (d.status !== window.__lastStatus) location.reload();
+    } catch (e) { }
+  }
+  refresh(); setInterval(refresh, 5000);
+
+  async function send(lat, lng, speed) {
+    const r = await fetch('/api/trips/' + TRIP + '/location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lat, lng, speed })
+    });
+    const d = await r.json();
+    if (d.auto_arrived) location.reload();
+  }
+  const share = document.getElementById('share');
+  if (share) share.onclick = () => {
+    if (!navigator.geolocation) { gpsmsg.textContent = 'Geolocation not supported.'; return; }
+    navigator.geolocation.watchPosition(p => {
+      send(p.coords.latitude, p.coords.longitude, p.coords.speed);
+      gpsmsg.textContent = 'Sharing location…';
+    }, e => gpsmsg.textContent = e.message, { enableHighAccuracy: true });
+    share.disabled = true;
+  };
+  const sim = document.getElementById('sim');
+  if (sim) sim.onclick = () => {
+    sim.disabled = true; let i = 0; const N = 12;
+    const timer = setInterval(async () => {
+      i++; const f = i / N;
+      await send(pickup[0] + (drop[0] - pickup[0]) * f, pickup[1] + (drop[1] - pickup[1]) * f, 40);
+      gpsmsg.textContent = 'Simulating… ' + i + '/' + N;
+      if (i >= N) clearInterval(timer);
+    }, 1500);
+  };
+</script>
+{% endblock %}

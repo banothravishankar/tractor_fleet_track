@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="stats">
+  {% for k, v in stats.items() %}<div class="stat"><b>{{ v }}</b><span>{{ k }}</span></div>{% endfor %}
+</div>
+
+{% if new_orders %}
+<div class="card">
+  <h2>Orders waiting for a tractor</h2>
+  <table>
+    <tr>
+      <th>#</th>
+      <th>Customer</th>
+      <th>Route</th>
+      <th>Material</th>
+      <th></th>
+    </tr>
+    {% for o in new_orders %}<tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.customer_name }}</td>
+      <td>{{ o.pickup_location }} → {{ o.drop_location }}</td>
+      <td>{{ o.material }} · {{ o.quantity }} {{ o.unit }}</td>
+      <td><a class="btn sm" href="{{ url_for('assign', oid=o.id) }}">Assign</a></td>
+    </tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Active trips</h2>
+  {% if active %}
+  <table>
+    <tr>
+      <th>Trip</th>
+      <th>Tractor</th>
+      <th>Driver</th>
+      <th>Customer</th>
+      <th>Route</th>
+      <th>Status</th>
+    </tr>
+    {% for t in active %}<tr>
+      <td><a href="{{ url_for('trip_detail', trip_id=t.id) }}">#{{ t.id }}</a></td>
+      <td>{{ t.reg_no }}</td>
+      <td>{{ t.driver_name }}</td>
+      <td>{{ t.customer_name }}</td>
+      <td>{{ t.pickup_location }} → {{ t.drop_location }}</td>
+      <td><span class="badge s-{{ t.status|replace(' ','') }}">{{ t.status }}</span></td>
+    </tr>{% endfor %}
+  </table>
+  {% else %}<p class="muted">No active trips.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Document expiry alerts (next 30 days)</h2>
+  {% if expiring %}
+  <table>
+    <tr>
+      <th>Tractor</th>
+      <th>Document</th>
+      <th>Number</th>
+      <th>Expires</th>
+    </tr>
+    {% for d in expiring %}<tr>
+      <td>{{ d.reg_no }}</td>
+      <td>{{ d.doc_type }}</td>
+      <td>{{ d.doc_number }}</td>
+      <td class="{{ 'bad' if d.expiry_date < today else 'warn' }}">{{ d.expiry_date }}{{ ' (expired)' if d.expiry_date <
+          today }}</td>
+    </tr>{% endfor %}
+  </table>
+  {% else %}<p class="muted">Nothing expiring soon.</p>{% endif %}
+</div>
+{% endblock %}

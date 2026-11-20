@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="head">
+  <h1>{{ t.reg_no }} <span class="badge t-{{ t.status|replace(' ','') }}">{{ t.status }}</span></h1>
+</div>
+<div class="card">
+  <dl>
+    <dt>Make / model</dt>
+    <dd>{{ t.make }} {{ t.model }}</dd>
+    <dt>Chassis / engine</dt>
+    <dd>{{ t.chassis_no }} / {{ t.engine_no }}</dd>
+    <dt>Capacity</dt>
+    <dd>{{ t.capacity_tons }} tons</dd>
+    <dt>GPS device</dt>
+    <dd>{{ t.gps_device_id }}</dd>
+  </dl>
+</div>
+
+<div class="card">
+  <h2>Documents</h2>
+  <table>
+    <tr>
+      <th>Type</th>
+      <th>Number</th>
+      <th>Expiry</th>
+      <th></th>
+    </tr>
+    {% for d in docs %}<tr>
+      <td>{{ d.doc_type }}</td>
+      <td>{{ d.doc_number }}</td>
+      <td class="{{ 'bad' if d.expiry_date < today }}">{{ d.expiry_date }}</td>
+      <td>{% if g.user.role == 'admin' %}<form method="post" action="{{ url_for('doc_delete', did=d.id) }}"><button
+            class="link">remove</button></form>{% endif %}</td>
+    </tr>
+    {% else %}<tr>
+      <td colspan="4" class="muted">No documents yet.</td>
+    </tr>{% endfor %}
+  </table>
+  {% if g.user.role == 'admin' %}
+  <form method="post" action="{{ url_for('tractor_doc_add', tid=t.id) }}" class="inline">
+    <select name="doc_type">
+      <option>RC</option>
+      <option>Insurance</option>
+      <option>Fitness</option>
+      <option>Permit</option>
+      <option>Pollution</option>
+    </select>
+    <input name="doc_number" placeholder="Document no.">
+    <input name="expiry_date" type="date" required>
+    <button class="btn sm">Add</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if g.user.role == 'admin' and t.status == 'Pending' %}
+<form method="post" action="{{ url_for('tractor_approve', tid=t.id) }}"><button class="btn">Approve tractor</button>
+</form>
+{% endif %}
+{% endblock %}

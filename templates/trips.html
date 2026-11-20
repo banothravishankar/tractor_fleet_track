@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>All trips</h1>
+<div class="card">
+    <table>
+        <tr>
+            <th>Trip</th>
+            <th>Tractor</th>
+            <th>Driver</th>
+            <th>Customer</th>
+            <th>Route</th>
+            <th>Status</th>
+        </tr>
+        {% for t in rows %}<tr>
+            <td><a href="{{ url_for('trip_detail', trip_id=t.id) }}">#{{ t.id }}</a></td>
+            <td>{{ t.reg_no }}</td>
+            <td>{{ t.driver_name }}</td>
+            <td>{{ t.customer_name }}</td>
+            <td>{{ t.pickup_location }} → {{ t.drop_location }}</td>
+            <td><span class="badge s-{{ t.status|replace(' ','') }}">{{ t.status }}</span></td>
+        </tr>
+        {% else %}<tr>
+            <td colspan="6" class="muted">No trips yet.</td>
+        </tr>{% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>New order</h1>
+<form method="post" class="card form">
+  {% if g.user.role != 'customer' %}
+  <label>Customer <select name="customer_id" required>{% for c in customers %}<option value="{{ c.id }}">{{ c.name }}
+      </option>{% endfor %}</select></label>
+  {% endif %}
+  <label>Pickup location <input name="pickup_location" required></label>
+  <label>Pickup latitude (optional) <input name="pickup_lat" type="number" step="any"></label>
+  <label>Pickup longitude (optional) <input name="pickup_lng" type="number" step="any"></label>
+  <label>Drop location <input name="drop_location" required></label>
+  <label>Drop latitude (optional, enables geofence) <input name="drop_lat" type="number" step="any"></label>
+  <label>Drop longitude (optional) <input name="drop_lng" type="number" step="any"></label>
+  <label>Material <input name="material" required placeholder="Cement, sand, grain…"></label>
+  <label>Quantity <input name="quantity" type="number" step="any" required></label>
+  <label>Unit <select name="unit">
+      <option>tons</option>
+      <option>bags</option>
+      <option>loads</option>
+    </select></label>
+  <button class="btn">Create order</button>
+</form>
+{% endblock %}

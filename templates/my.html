@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="head">
+    <h1>{{ title }}</h1>
+    {% if g.user.role == 'customer' %}<a class="btn" href="{{ url_for('order_new') }}">+ New order</a>{% endif %}
+</div>
+{% if pending %}<div class="card">
+    <h2>Waiting for assignment</h2>
+    {% for o in pending %}<p>Order #{{ o.id }}: {{ o.material }}, {{ o.quantity }} {{ o.unit }} · {{ o.pickup_location
+        }} → {{ o.drop_location }}</p>{% endfor %}
+</div>{% endif %}
+<div class="card">
+    <table>
+        <tr>
+            <th>Trip</th>
+            <th>Tractor</th>
+            <th>{{ 'Customer' if g.user.role == 'driver' else 'Driver' }}</th>
+            <th>Route</th>
+            <th>Material</th>
+            <th>Status</th>
+        </tr>
+        {% for t in rows %}<tr>
+            <td><a href="{{ url_for('trip_detail', trip_id=t.id) }}">#{{ t.id }}</a></td>
+            <td>{{ t.reg_no }}</td>
+            <td>{{ t.customer_name if g.user.role == 'driver' else t.driver_name }}</td>
+            <td>{{ t.pickup_location }} → {{ t.drop_location }}</td>
+            <td>{{ t.material }} · {{ t.quantity }} {{ t.unit }}</td>
+            <td><span class="badge s-{{ t.status|replace(' ','') }}">{{ t.status }}</span></td>
+        </tr>
+        {% else %}<tr>
+            <td colspan="6" class="muted">Nothing here yet.</td>
+        </tr>{% endfor %}
+    </table>
+</div>
+{% endblock %}
