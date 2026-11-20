@@ -9,6 +9,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
+
 Open http://localhost:5000. The database `fleet.db` is included with demo data
 (`python app.py --reset` recreates it).
 

@@ -27,7 +27,10 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(APP_DIR, "fleet.db")
+# DB_PATH = os.path.join(APP_DIR, "fleet.db")
+DB_PATH = (
+    "/tmp/fleet.db" if os.environ.get("VERCEL") else os.path.join(APP_DIR, "fleet.db")
+)
 GEOFENCE_METERS = 300
 
 app = Flask(__name__)
@@ -112,7 +115,7 @@ def init_db(reset=False):
         "INSERT INTO tractors(reg_no,make,model,chassis_no,engine_no,capacity_tons,"
         "gps_device_id,status,approved_by) VALUES(?,?,?,?,?,?,?,?,?)",
         (
-            "AP37TA1001",
+            "TG37TA1001",
             "Tata",
             "Prima 4028.S",
             "CH1001",
@@ -127,7 +130,7 @@ def init_db(reset=False):
         "INSERT INTO tractors(reg_no,make,model,chassis_no,engine_no,capacity_tons,"
         "gps_device_id,status,approved_by) VALUES(?,?,?,?,?,?,?,?,?)",
         (
-            "AP37TA1002",
+            "TG37TA1002",
             "Ashok Leyland",
             "4220",
             "CH1002",
@@ -141,7 +144,7 @@ def init_db(reset=False):
     db.execute(
         "INSERT INTO tractors(reg_no,make,model,chassis_no,engine_no,capacity_tons,gps_device_id)"
         " VALUES(?,?,?,?,?,?,?)",
-        ("AP37TA1003", "BharatBenz", "3528C", "CH1003", "EN1003", 28, "GPS-0003"),
+        ("TG37TA1003", "BharatBenz", "3528C", "CH1003", "EN1003", 28, "GPS-0003"),
     )
     soon = (date.today() + timedelta(days=12)).isoformat()
     later = (date.today() + timedelta(days=300)).isoformat()
@@ -162,7 +165,7 @@ def init_db(reset=False):
         "drop_lat,drop_lng,material,quantity,unit,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         (
             cust,
-            "Vijayawada Stockyard",
+            "Khammam Stockyard",
             16.5062,
             80.6480,
             "Eluru Site-A",
@@ -767,6 +770,7 @@ def api_get_locations(trip_id):
 
 if __name__ == "__main__":
     init_db(reset="--reset" in sys.argv)
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+    # app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+    app.run(host="0.0.0.0", debug=True)
 else:
     init_db()
